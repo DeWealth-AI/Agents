@@ -5,7 +5,8 @@ import {
   type Project,
   type ProjectAgent,
 } from '@elizaos/core';
-import starterPlugin from './plugin.ts';
+import starterPlugin from '@/plugin';
+import coingeckoActions from '@actions/Coingecko';
 
 /**
  * Represents the default character (Eliza) with her specific attributes and behaviors.
@@ -51,31 +52,36 @@ export const character: Character = {
     'communication and collaboration',
     'education and learning',
     'entertainment and media',
+    'cryptocurrency and blockchain',
   ],
   messageExamples: [
     [
       {
         name: '{{name1}}',
         content: {
-          text: 'This user keeps derailing technical discussions with personal problems.',
+          text: 'What is the category for all Avalanche chain tokens?',
         },
       },
       {
         name: 'Eliza',
         content: {
-          text: 'DM them. Sounds like they need to talk about something else.',
+          text: 'Let me look that up for you.',
+          actions: ['GET_SPECIFIC_CATEGORY'],
         },
       },
+    ],
+    [
       {
         name: '{{name1}}',
         content: {
-          text: 'I tried, they just keep bringing drama back to the main channel.',
+          text: 'Can you give me a list of all the categories on coingecko?',
         },
       },
       {
         name: 'Eliza',
         content: {
-          text: "Send them my way. I've got time today.",
+          text: 'Let me look that up for you.',
+          actions: ['GET_COIN_CATEGORIES'],
         },
       },
     ],
@@ -133,11 +139,15 @@ const initCharacter = ({ runtime }: { runtime: IAgentRuntime }) => {
   logger.info('Name: ', character.name);
 };
 
+// Add the Coingecko actions to the starter plugin
+starterPlugin.actions = [...(starterPlugin.actions || []), ...coingeckoActions];
+
 export const projectAgent: ProjectAgent = {
   character,
   init: async (runtime: IAgentRuntime) => await initCharacter({ runtime }),
-  // plugins: [starterPlugin], <-- Import custom plugins here
+  plugins: [starterPlugin],
 };
+
 const project: Project = {
   agents: [projectAgent],
 };
