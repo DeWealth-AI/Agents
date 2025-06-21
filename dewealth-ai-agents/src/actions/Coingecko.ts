@@ -46,19 +46,6 @@ const getCoinCategories: Action = {
     try {
       logger.info('Handling GET_COIN_CATEGORIES action');
 
-      const responseContent: Content = {
-        text: 'I am fetching the list of categories from CoinGecko. This may take a few seconds...',
-        actions: ['GET_COIN_CATEGORIES'],
-        source: message.content.source,
-        thought: 'I am fetching the list of categories from CoinGecko.',
-      };
-
-      // this is the initial message that is sent to the user
-      if (callback) {
-        await callback(responseContent);
-        logger.info('GET_COIN_CATEGORIES callback called');
-      }
-
       const response: AxiosResponse<CoinCategory[]> = await axios.get(
         'https://api.coingecko.com/api/v3/coins/categories/list'
       );
@@ -71,34 +58,30 @@ const getCoinCategories: Action = {
         .join('\n');
       const responseText = `I've fetched the complete list of cryptocurrency categories from CoinGecko. Here are the first 10 categories:\n${categoryList}\n\nThere are ${categories.length} total categories available. The full data has been loaded and is ready for you to explore.`;
 
-      await runtime.createMemory(
-        {
-          id: uuidv4() as `${string}-${string}-${string}-${string}-${string}`,
-          content: {
-            text: responseText,
-          },
-          agentId: runtime.agentId,
-          entityId: message.entityId,
-          roomId: message.roomId,
-        },
-        'messages'
-      );
-
-      return true;
-    } catch (error) {
-      logger.error('Error in GET_COIN_CATEGORIES action:', error);
-
-      const errorContent: Content = {
-        text: 'I encountered an error while fetching cryptocurrency categories. Please try again.',
+      const responseContent: Content = {
+        text: responseText,
         actions: ['GET_COIN_CATEGORIES'],
         source: message.content.source,
+        data: categories, // Include the full categories data so Eliza can access it
       };
 
-      if (callback) {
-        callback(errorContent);
-      }
+      logger.info('GET_COIN_CATEGORIES response content:', {
+        textLength: responseText.length,
+        hasCallback: !!callback,
+        actions: responseContent.actions,
+        dataLength: categories.length,
+      });
 
-      return errorContent;
+      logger.info('GET_COIN_CATEGORIES response content:', responseText);
+
+      // Call back with the response (following HELLO_WORLD pattern)
+      await callback(responseContent);
+
+      logger.info('GET_COIN_CATEGORIES action completed successfully');
+      return responseContent;
+    } catch (error) {
+      logger.error('Error in GET_COIN_CATEGORIES action:', error);
+      throw error;
     }
   },
 
