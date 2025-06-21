@@ -8,7 +8,7 @@ import {
   type State,
 } from '@elizaos/core';
 import axios, { AxiosResponse } from 'axios';
-import type { CoinCategory } from '@/types/CoingeckoCategories';
+import type { CoinCategory } from '../types/CoingeckoCategories';
 
 const getCoinCategories: Action = {
   name: 'GET_COIN_CATEGORIES',
@@ -18,6 +18,12 @@ const getCoinCategories: Action = {
     'SHOW_CATEGORIES',
     'GET_ALL_CATEGORIES',
     'VIEW_CATEGORIES',
+    'COIN_CATEGORIES',
+    'CRYPTO_CATEGORIES',
+    'CATEGORIES_LIST',
+    'SHOW_ALL_CATEGORIES',
+    'GET_CATEGORIES',
+    'LIST_ALL_CATEGORIES',
   ],
 
   validate: async (
@@ -31,10 +37,10 @@ const getCoinCategories: Action = {
   handler: async (
     _runtime: IAgentRuntime,
     message: Memory,
-    state: State | undefined,
+    _state: State,
     _options: any,
-    callback: HandlerCallback | undefined,
-    responses: Memory[] | undefined
+    callback: HandlerCallback,
+    _responses: Memory[]
   ) => {
     try {
       logger.info('Handling GET_COIN_CATEGORIES action');
@@ -42,11 +48,14 @@ const getCoinCategories: Action = {
       const response: AxiosResponse<CoinCategory[]> = await axios.get(
         'https://api.coingecko.com/api/v3/coins/categories/list'
       );
-
       const categories = response.data;
-      const responseText = `Here are all available cryptocurrency categories:\n${categories
+
+      // Create a more concise response to avoid potential issues with very long responses
+      const categoryList = categories
+        .slice(0, 10)
         .map((cat) => `- ${cat.name} (ID: ${cat.category_id})`)
-        .join('\n')}`;
+        .join('\n');
+      const responseText = `I've fetched the complete list of cryptocurrency categories from CoinGecko. Here are the first 10 categories:\n${categoryList}\n\nThere are ${categories.length} total categories available. The full data has been loaded and is ready for you to explore.`;
 
       const responseContent: Content = {
         text: responseText,
@@ -55,14 +64,37 @@ const getCoinCategories: Action = {
         data: categories,
       };
 
+      logger.info('GET_COIN_CATEGORIES response content:', {
+        textLength: responseText.length,
+        hasCallback: !!callback,
+        actions: responseContent.actions,
+        dataLength: categories.length,
+      });
+
+      logger.info('GET_COIN_CATEGORIES response content:', responseText);
+
+      // Call back with the response (following HELLO_WORLD pattern)
       if (callback) {
         await callback(responseContent);
+        logger.info('GET_COIN_CATEGORIES callback called');
       }
 
+      logger.info('GET_COIN_CATEGORIES action completed successfully');
       return responseContent;
     } catch (error) {
       logger.error('Error in GET_COIN_CATEGORIES action:', error);
-      throw error;
+
+      const errorContent: Content = {
+        text: 'I encountered an error while fetching cryptocurrency categories. Please try again.',
+        actions: ['GET_COIN_CATEGORIES'],
+        source: message.content.source,
+      };
+
+      if (callback) {
+        callback(errorContent);
+      }
+
+      return errorContent;
     }
   },
 
@@ -108,6 +140,12 @@ const getSpecificCategory: Action = {
     'SEARCH_CATEGORY',
     'LOOKUP_CATEGORY',
     'GET_CATEGORY_INFO',
+    'SPECIFIC_CATEGORY',
+    'CATEGORY_INFO',
+    'FIND_SPECIFIC_CATEGORY',
+    'SEARCH_SPECIFIC_CATEGORY',
+    'LOOKUP_SPECIFIC_CATEGORY',
+    'GET_CATEGORY_DETAILS',
   ],
 
   validate: async (
@@ -121,16 +159,17 @@ const getSpecificCategory: Action = {
   handler: async (
     _runtime: IAgentRuntime,
     message: Memory,
-    state: State | undefined,
+    _state: State,
     _options: any,
-    callback: HandlerCallback | undefined,
-    responses: Memory[] | undefined
+    callback: HandlerCallback,
+    _responses: Memory[]
   ) => {
     try {
       logger.info('Handling GET_SPECIFIC_CATEGORY action');
 
       // Extract the category name from the message
       const categoryQuery = message.content.text?.toLowerCase() || '';
+      logger.info('Searching for category:', categoryQuery);
 
       // Get all categories
       const response: AxiosResponse<CoinCategory[]> = await axios.get(
@@ -148,8 +187,10 @@ const getSpecificCategory: Action = {
       let responseText: string;
       if (matchingCategory) {
         responseText = `I found the category you're looking for:\nName: ${matchingCategory.name}\nID: ${matchingCategory.category_id}`;
+        logger.info('Found matching category:', matchingCategory.name);
       } else {
         responseText = `I couldn't find any category matching "${categoryQuery}". Would you like to see the full list of available categories?`;
+        logger.info('No matching category found for query:', categoryQuery);
       }
 
       const responseContent: Content = {
@@ -159,10 +200,16 @@ const getSpecificCategory: Action = {
         data: matchingCategory || null,
       };
 
-      if (callback) {
-        await callback(responseContent);
-      }
+      logger.info('GET_SPECIFIC_CATEGORY response content:', {
+        textLength: responseText.length,
+        hasCallback: !!callback,
+        actions: responseContent.actions,
+      });
 
+      // Call back with the response (following HELLO_WORLD pattern)
+      await callback(responseContent);
+
+      logger.info('GET_SPECIFIC_CATEGORY action completed successfully');
       return responseContent;
     } catch (error) {
       logger.error('Error in GET_SPECIFIC_CATEGORY action:', error);
@@ -204,4 +251,73 @@ const getSpecificCategory: Action = {
   ],
 };
 
-export default [getCoinCategories, getSpecificCategory];
+const testAction: Action = {
+  name: 'TEST_ACTION',
+  description: 'A simple test action that returns a basic response',
+  similes: ['TEST', 'SIMPLE_TEST', 'BASIC_TEST'],
+
+  validate: async (
+    _runtime: IAgentRuntime,
+    _message: Memory,
+    _state: State
+  ): Promise<boolean> => {
+    return true;
+  },
+
+  handler: async (
+    _runtime: IAgentRuntime,
+    message: Memory,
+    _state: State,
+    _options: any,
+    callback: HandlerCallback,
+    _responses: Memory[]
+  ) => {
+    try {
+      logger.info('Handling TEST_ACTION');
+
+      const responseText =
+        'This is a test response from the TEST_ACTION. If you see this, the action system is working!';
+
+      const responseContent: Content = {
+        text: responseText,
+        actions: ['TEST_ACTION'],
+        source: message.content.source,
+      };
+
+      logger.info('TEST_ACTION response content:', {
+        textLength: responseText.length,
+        hasCallback: !!callback,
+        actions: responseContent.actions,
+      });
+
+      // Call back with the test message (following HELLO_WORLD pattern)
+      await callback(responseContent);
+
+      logger.info('TEST_ACTION completed successfully');
+      return responseContent;
+    } catch (error) {
+      logger.error('Error in TEST_ACTION:', error);
+      throw error;
+    }
+  },
+
+  examples: [
+    [
+      {
+        name: '{{name1}}',
+        content: {
+          text: 'Test the action system',
+        },
+      },
+      {
+        name: '{{name2}}',
+        content: {
+          text: 'This is a test response from the TEST_ACTION. If you see this, the action system is working!',
+          actions: ['TEST_ACTION'],
+        },
+      },
+    ],
+  ],
+};
+
+export default [getCoinCategories, getSpecificCategory, testAction];

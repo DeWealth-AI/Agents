@@ -31,6 +31,8 @@
     "@elizaos/core": "^1.0.8",
     "@elizaos/plugin-bootstrap": "^1.0.8",
     "@elizaos/plugin-sql": "^1.0.8",
+    "@langchain/core": "^0.3.60",
+    "axios": "^1.10.0",
     "zod": "3.24.2"
   },
   "devDependencies": {

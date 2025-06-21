@@ -14,6 +14,7 @@ import {
   logger,
 } from '@elizaos/core';
 import { z } from 'zod';
+import coingeckoActions from './actions/Coingecko';
 
 /**
  * Define the configuration schema for the plugin with the following properties:
@@ -54,7 +55,11 @@ const helloWorldAction: Action = {
   similes: ['GREET', 'SAY_HELLO'],
   description: 'Responds with a simple hello world message',
 
-  validate: async (_runtime: IAgentRuntime, _message: Memory, _state: State): Promise<boolean> => {
+  validate: async (
+    _runtime: IAgentRuntime,
+    _message: Memory,
+    _state: State
+  ): Promise<boolean> => {
     // Always valid
     return true;
   },
@@ -139,6 +144,10 @@ export class StarterService extends Service {
   static async start(runtime: IAgentRuntime) {
     logger.info('*** Starting starter service ***');
     const service = new StarterService(runtime);
+
+    // Set up message bus monitoring
+    logger.info('*** Setting up message bus monitoring ***');
+
     return service;
   }
 
@@ -154,6 +163,16 @@ export class StarterService extends Service {
 
   async stop() {
     logger.info('*** Stopping starter service instance ***');
+  }
+
+  // Add method to get message bus status
+  async getMessageBusStatus() {
+    logger.info('*** Getting message bus status ***');
+    return {
+      serviceType: StarterService.serviceType,
+      status: 'active',
+      timestamp: new Date().toISOString(),
+    };
   }
 }
 
@@ -216,39 +235,227 @@ const plugin: Plugin = {
         });
       },
     },
+    {
+      name: 'messagebus-status',
+      path: '/messagebus-status',
+      type: 'GET',
+      handler: async (req: any, res: any) => {
+        logger.info('*** Message bus status requested ***');
+        res.json({
+          message: 'Message bus status',
+          timestamp: new Date().toISOString(),
+          status: 'active',
+          info: 'Use this endpoint to check message bus status. Check logs for detailed message flow.',
+        });
+      },
+    },
+    {
+      name: 'debug-actions',
+      path: '/debug-actions',
+      type: 'GET',
+      handler: async (req: any, res: any) => {
+        logger.info('*** Debug actions requested ***');
+        res.json({
+          message: 'Available actions for debugging',
+          actions: [
+            'GET_COIN_CATEGORIES',
+            'GET_SPECIFIC_CATEGORY',
+            'TEST_ACTION',
+            'HELLO_WORLD',
+          ],
+          info: 'These actions are available in the plugin. Check logs for execution details.',
+        });
+      },
+    },
   ],
   events: {
     MESSAGE_RECEIVED: [
       async (params) => {
         logger.info('MESSAGE_RECEIVED event received');
-        // print the keys
-        logger.info(Object.keys(params));
+        logger.info('Message parameters keys:', Object.keys(params));
+
+        // Log detailed message information
+        if (params.message) {
+          logger.info('Message ID:', params.message.id || 'No ID');
+          logger.info(
+            'Message content:',
+            JSON.stringify(params.message.content, null, 2)
+          );
+          logger.info(
+            'Message source:',
+            params.message.content?.source || 'No source'
+          );
+          logger.info(
+            'Message actions:',
+            params.message.content?.actions || 'No actions'
+          );
+        }
+
+        if (params.runtime) {
+          logger.info('Runtime available:', !!params.runtime);
+          logger.info(
+            'Runtime actions count:',
+            params.runtime.actions?.length || 0
+          );
+        }
+
+        // Safely serialize params without circular references
+        try {
+          const safeParams = {
+            message: params.message
+              ? {
+                  id: params.message.id,
+                  content: params.message.content,
+                }
+              : null,
+            source: params.source,
+            runtime: params.runtime
+              ? {
+                  hasActions: !!params.runtime.actions,
+                  actionsCount: params.runtime.actions?.length || 0,
+                }
+              : null,
+          };
+          logger.info(
+            'Full params structure:',
+            JSON.stringify(safeParams, null, 2)
+          );
+        } catch (error) {
+          logger.info(
+            'Could not serialize full params due to circular reference'
+          );
+        }
       },
     ],
     VOICE_MESSAGE_RECEIVED: [
       async (params) => {
         logger.info('VOICE_MESSAGE_RECEIVED event received');
-        // print the keys
-        logger.info(Object.keys(params));
+        logger.info('Voice message parameters keys:', Object.keys(params));
+        try {
+          const safeParams = {
+            message: params.message
+              ? {
+                  id: params.message.id,
+                  content: params.message.content,
+                }
+              : null,
+            source: params.source,
+            runtime: params.runtime
+              ? {
+                  hasActions: !!params.runtime.actions,
+                  actionsCount: params.runtime.actions?.length || 0,
+                }
+              : null,
+          };
+          logger.info(
+            'Voice message content:',
+            JSON.stringify(safeParams, null, 2)
+          );
+        } catch (error) {
+          logger.info(
+            'Could not serialize voice message params due to circular reference'
+          );
+        }
       },
     ],
     WORLD_CONNECTED: [
       async (params) => {
         logger.info('WORLD_CONNECTED event received');
-        // print the keys
-        logger.info(Object.keys(params));
+        logger.info('World connection parameters keys:', Object.keys(params));
+        try {
+          const safeParams = {
+            world: params.world
+              ? {
+                  id: params.world.id,
+                  name: params.world.name,
+                }
+              : null,
+            rooms: params.rooms?.length || 0,
+            entities: params.entities?.length || 0,
+            source: params.source,
+            runtime: params.runtime
+              ? {
+                  hasActions: !!params.runtime.actions,
+                  actionsCount: params.runtime.actions?.length || 0,
+                }
+              : null,
+          };
+          logger.info(
+            'World connection details:',
+            JSON.stringify(safeParams, null, 2)
+          );
+        } catch (error) {
+          logger.info(
+            'Could not serialize world connection params due to circular reference'
+          );
+        }
       },
     ],
     WORLD_JOINED: [
       async (params) => {
         logger.info('WORLD_JOINED event received');
-        // print the keys
-        logger.info(Object.keys(params));
+        logger.info('World join parameters keys:', Object.keys(params));
+        try {
+          const safeParams = {
+            world: params.world
+              ? {
+                  id: params.world.id,
+                  name: params.world.name,
+                }
+              : null,
+            entity: (params as any).entity
+              ? {
+                  id: (params as any).entity.id,
+                  name: (params as any).entity.name,
+                }
+              : null,
+            rooms: params.rooms?.length || 0,
+            entities: params.entities?.length || 0,
+            source: params.source,
+            runtime: params.runtime
+              ? {
+                  hasActions: !!params.runtime.actions,
+                  actionsCount: params.runtime.actions?.length || 0,
+                }
+              : null,
+          };
+          logger.info(
+            'World join details:',
+            JSON.stringify(safeParams, null, 2)
+          );
+        } catch (error) {
+          logger.info(
+            'Could not serialize world join params due to circular reference'
+          );
+        }
+      },
+    ],
+    ACTION_EXECUTED: [
+      async (params) => {
+        logger.info('ACTION_EXECUTED event received');
+        logger.info('Action execution parameters keys:', Object.keys(params));
+        logger.info('Action name:', params.actionName || 'No action name');
+        logger.info('Action result:', JSON.stringify(params.result, null, 2));
+        logger.info(
+          'Action execution details:',
+          JSON.stringify(params, null, 2)
+        );
+      },
+    ],
+    MESSAGE_SENT: [
+      async (params) => {
+        logger.info('MESSAGE_SENT event received');
+        logger.info('Message sent parameters keys:', Object.keys(params));
+        logger.info(
+          'Sent message content:',
+          JSON.stringify(params.message?.content, null, 2)
+        );
+        logger.info('Sent message details:', JSON.stringify(params, null, 2));
       },
     ],
   },
   services: [StarterService],
-  actions: [helloWorldAction],
+  actions: [helloWorldAction, ...coingeckoActions],
   providers: [helloWorldProvider],
 };
 

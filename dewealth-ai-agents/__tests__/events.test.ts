@@ -48,8 +48,18 @@ describe('Plugin Events', () => {
       await messageHandler(mockParams);
 
       // Verify log was called
-      expect(logger.info).toHaveBeenCalledWith('MESSAGE_RECEIVED event received');
-      expect(logger.info).toHaveBeenCalledWith(expect.any(Array));
+      expect(logger.info).toHaveBeenCalledWith(
+        'MESSAGE_RECEIVED event received'
+      );
+      expect(logger.info).toHaveBeenCalledWith(
+        'Message parameters keys:',
+        expect.any(Array)
+      );
+      expect(logger.info).toHaveBeenCalledWith('Message ID:', 'test-id');
+      expect(logger.info).toHaveBeenCalledWith(
+        'Message content:',
+        expect.any(String)
+      );
     }
   });
 
@@ -75,8 +85,17 @@ describe('Plugin Events', () => {
       await voiceHandler(mockParams);
 
       // Verify log was called
-      expect(logger.info).toHaveBeenCalledWith('VOICE_MESSAGE_RECEIVED event received');
-      expect(logger.info).toHaveBeenCalledWith(expect.any(Array));
+      expect(logger.info).toHaveBeenCalledWith(
+        'VOICE_MESSAGE_RECEIVED event received'
+      );
+      expect(logger.info).toHaveBeenCalledWith(
+        'Voice message parameters keys:',
+        expect.any(Array)
+      );
+      expect(logger.info).toHaveBeenCalledWith(
+        'Voice message content:',
+        expect.any(String)
+      );
     }
   });
 
@@ -104,8 +123,17 @@ describe('Plugin Events', () => {
       await connectedHandler(mockParams);
 
       // Verify log was called
-      expect(logger.info).toHaveBeenCalledWith('WORLD_CONNECTED event received');
-      expect(logger.info).toHaveBeenCalledWith(expect.any(Array));
+      expect(logger.info).toHaveBeenCalledWith(
+        'WORLD_CONNECTED event received'
+      );
+      expect(logger.info).toHaveBeenCalledWith(
+        'World connection parameters keys:',
+        expect.any(Array)
+      );
+      expect(logger.info).toHaveBeenCalledWith(
+        'World connection details:',
+        expect.any(String)
+      );
     }
   });
 
@@ -138,7 +166,14 @@ describe('Plugin Events', () => {
 
       // Verify log was called
       expect(logger.info).toHaveBeenCalledWith('WORLD_JOINED event received');
-      expect(logger.info).toHaveBeenCalledWith(expect.any(Array));
+      expect(logger.info).toHaveBeenCalledWith(
+        'World join parameters keys:',
+        expect.any(Array)
+      );
+      expect(logger.info).toHaveBeenCalledWith(
+        'World join details:',
+        expect.any(String)
+      );
     }
   });
 });
