@@ -9,6 +9,7 @@ import {
 } from '@elizaos/core';
 import axios, { AxiosResponse } from 'axios';
 import type { CoinCategory } from '../types/CoingeckoCategories';
+import { v4 as uuidv4 } from 'uuid';
 
 const getCoinCategories: Action = {
   name: 'GET_COIN_CATEGORIES',
@@ -35,7 +36,7 @@ const getCoinCategories: Action = {
   },
 
   handler: async (
-    _runtime: IAgentRuntime,
+    runtime: IAgentRuntime,
     message: Memory,
     _state: State,
     _options: any,
@@ -44,6 +45,19 @@ const getCoinCategories: Action = {
   ) => {
     try {
       logger.info('Handling GET_COIN_CATEGORIES action');
+
+      const responseContent: Content = {
+        text: 'I am fetching the list of categories from CoinGecko. This may take a few seconds...',
+        actions: ['GET_COIN_CATEGORIES'],
+        source: message.content.source,
+        thought: 'I am fetching the list of categories from CoinGecko.',
+      };
+
+      // this is the initial message that is sent to the user
+      if (callback) {
+        await callback(responseContent);
+        logger.info('GET_COIN_CATEGORIES callback called');
+      }
 
       const response: AxiosResponse<CoinCategory[]> = await axios.get(
         'https://api.coingecko.com/api/v3/coins/categories/list'
@@ -57,30 +71,20 @@ const getCoinCategories: Action = {
         .join('\n');
       const responseText = `I've fetched the complete list of cryptocurrency categories from CoinGecko. Here are the first 10 categories:\n${categoryList}\n\nThere are ${categories.length} total categories available. The full data has been loaded and is ready for you to explore.`;
 
-      const responseContent: Content = {
-        text: responseText,
-        actions: ['GET_COIN_CATEGORIES'],
-        source: message.content.source,
-        data: categories,
-      };
+      await runtime.createMemory(
+        {
+          id: uuidv4() as `${string}-${string}-${string}-${string}-${string}`,
+          content: {
+            text: responseText,
+          },
+          agentId: runtime.agentId,
+          entityId: message.entityId,
+          roomId: message.roomId,
+        },
+        'messages'
+      );
 
-      logger.info('GET_COIN_CATEGORIES response content:', {
-        textLength: responseText.length,
-        hasCallback: !!callback,
-        actions: responseContent.actions,
-        dataLength: categories.length,
-      });
-
-      logger.info('GET_COIN_CATEGORIES response content:', responseText);
-
-      // Call back with the response (following HELLO_WORLD pattern)
-      if (callback) {
-        await callback(responseContent);
-        logger.info('GET_COIN_CATEGORIES callback called');
-      }
-
-      logger.info('GET_COIN_CATEGORIES action completed successfully');
-      return responseContent;
+      return true;
     } catch (error) {
       logger.error('Error in GET_COIN_CATEGORIES action:', error);
 
