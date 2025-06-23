@@ -4,7 +4,7 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch index.ts",
+    "dev": "tsx index.ts",
     "build": "tsc",
     "build:prod": "tsc --project tsconfig.prod.json",
     "start": "node dist/index.js",
