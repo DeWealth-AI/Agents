@@ -8,6 +8,7 @@ A TypeScript project using OpenAI Agents to provide cryptocurrency assistance wi
 - **Cryptocurrency Categories**: Fetch and analyze different cryptocurrency categories
 - **AI-Powered Assistance**: Uses GPT-4o-mini to provide intelligent crypto insights and recommendations
 - **Interactive CLI**: Beautiful terminal interface with loading spinners and status indicators
+- **REST API**: Express server with endpoints for programmatic access to the agent
 
 ## Prerequisites
 
@@ -70,6 +71,9 @@ npm start
 ## Available Scripts
 
 - `npm run dev` - Start development server with hot reloading
+- `npm run server:dev` - Start Express server in development mode
+- `npm run server:build` - Build the Express server
+- `npm run server:start` - Start the built Express server
 - `npm run build` - Build for development (with source maps and declarations)
 - `npm run build:prod` - Build for production (optimized)
 - `npm start` - Run the built application
@@ -79,14 +83,115 @@ npm start
 - `npm run format` - Format code with Prettier
 - `npm run format:check` - Check code formatting with Prettier
 
+## API Usage
+
+The project includes an Express server that exposes the cryptocurrency agent via REST API endpoints.
+
+### Starting the Server
+
+**Development mode:**
+
+```bash
+npm run server:dev
+```
+
+**Production mode:**
+
+```bash
+npm run server:build
+npm run server:start
+```
+
+The server runs on port 3000 by default (configurable via `PORT` environment variable).
+
+### Available Endpoints
+
+#### Health Check
+
+```
+GET /health
+```
+
+Returns server status:
+
+```json
+{
+  "status": "OK",
+  "message": "Cryptocurrency Expert Agent is running"
+}
+```
+
+#### Query Agent
+
+```
+POST /query
+```
+
+Send a query to the cryptocurrency agent:
+
+**Request Body:**
+
+```json
+{
+  "query": "Give me the top 10 cryptocurrencies by market cap"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "query": "Give me the top 10 cryptocurrencies by market cap",
+  "response": "Based on the current market data, here are the top 10 cryptocurrencies by market cap...",
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+### Example API Usage
+
+**Using curl:**
+
+```bash
+# Health check
+curl http://localhost:3000/health
+
+# Query the agent
+curl -X POST http://localhost:3000/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What are the top 5 cryptocurrencies by market cap?"}'
+```
+
+**Using JavaScript/Node.js:**
+
+```javascript
+const response = await fetch('http://localhost:3000/query', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    query: 'Give me information about Bitcoin',
+  }),
+});
+
+const data = await response.json();
+console.log(data.response);
+```
+
 ## Project Structure
 
 ```
 agents/
 ├── index.ts              # Main application entry point
+├── server.ts             # Express server with API endpoints
 ├── tools/                # Agent tools directory
 │   ├── categorySearch.ts # Cryptocurrency categories tool
+│   ├── coinPlatforms.ts  # Coin platforms tool
 │   └── coinsMarketData.ts # Market data tool
+├── types/                # TypeScript type definitions
+│   ├── CoingeckoCategories.ts
+│   └── CoingeckoPlatforms.ts
 ├── dist/                 # Build output directory
 ├── tsconfig.json         # TypeScript configuration for development
 ├── tsconfig.prod.json    # TypeScript configuration for production
