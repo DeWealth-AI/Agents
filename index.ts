@@ -20,7 +20,7 @@ async function main() {
   try {
     const result = await run(
       cryptoExperAgent,
-      'Give me the top 10 coins by market cap on the Avalanche(AVAX) ecosystem'
+      'Give me the top 10 coins by market cap'
     );
     agentSpinner.succeed('✅ Agent finished successfully!');
     console.log(result.finalOutput);

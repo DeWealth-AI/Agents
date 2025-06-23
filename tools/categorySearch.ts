@@ -19,7 +19,6 @@ const categorySearch = tool({
       const response = await fetch(
         `https://api.coingecko.com/api/v3/coins/categories/list`
       );
-      console.log('[DEBUG] URL: ', response.url);
       const data: CoingeckoCategories[] = await response.json();
       spinner.succeed('✅ Categories fetched successfully');
 
@@ -31,8 +30,6 @@ const categorySearch = tool({
             category.category_id.toLowerCase().includes(keyword.toLowerCase())
         );
       });
-
-      console.log('[DEBUG] Filtered categories: ', filteredCategories);
 
       return filteredCategories;
     } catch (error) {

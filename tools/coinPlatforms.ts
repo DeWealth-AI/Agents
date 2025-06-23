@@ -28,12 +28,11 @@ const coinPlatforms = tool({
       const response = await fetch(
         `https://api.coingecko.com/api/v3/coins/list?include_platform=true`
       );
-      console.log('[DEBUG] URL: ', response.url);
+
       const data: CoingeckoPlatforms[] = await response.json();
       spinner.succeed('✅ Coin platforms fetched successfully');
 
       const filteredCoins = data.filter((coin) => coin.platforms[platform]);
-      console.log('[DEBUG] Filtered coins: ', filteredCoins);
 
       return filteredCoins;
     } catch (error) {

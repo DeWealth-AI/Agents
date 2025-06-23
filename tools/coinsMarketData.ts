@@ -20,14 +20,16 @@ const coinsMarketData = tool({
   execute: async ({ vs_currency, ids, names, category }) => {
     const spinner = ora('📊 Fetching market data...').start();
 
+    const idsParam = ids ? `&ids=${ids}` : '';
+    const namesParam = names ? `&names=${names}` : '';
+    const categoryParam = category ? `&category=${category}` : '';
+
     try {
       const response = await fetch(
-        `https://api.coingecko.com/api/v3/coins/markets?vs_currency=${vs_currency}&ids=${ids}&names=${names}&category=${category}`
+        `https://api.coingecko.com/api/v3/coins/markets?vs_currency=${vs_currency}${idsParam}${namesParam}${categoryParam}`
       );
-      console.log('[DEBUG] URL: ', response.url);
       const data = await response.json();
       spinner.succeed('✅ Market data fetched successfully');
-      console.log('[DEBUG] Market data: ', data);
       return data;
     } catch (error) {
       spinner.fail('❌ Failed to fetch market data');
