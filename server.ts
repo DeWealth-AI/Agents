@@ -1,6 +1,7 @@
 import 'dotenv/config';
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { Agent, run } from '@openai/agents';
 import { model } from './constants';
 import categorySearch from './tools/categorySearch';
@@ -10,9 +11,23 @@ import coinsMarketData from './tools/coinsMarketData';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Rate limiting middleware (2 requests per minute per IP)
+const limiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 2, // limit each IP to 2 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: {
+    error: 'Too many requests',
+    message:
+      'You have exceeded the maximum number of requests per minute. Please try again later.',
+  },
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(limiter);
 
 // Initialize the agent
 const cryptoExpertAgent = new Agent({
@@ -29,15 +44,25 @@ app.get('/health', (req, res) => {
 });
 
 // Main agent endpoint
-app.post('/query', async (req, res) => {
+app.post('/query', async (req: Request, res: Response): Promise<void> => {
   try {
     const { query } = req.body;
 
     if (!query) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'Query is required',
         message: 'Please provide a query in the request body',
       });
+      return;
+    }
+
+    // Validate query length
+    if (query.length > Number(process.env.MAX_QUERY_LENGTH)) {
+      res.status(400).json({
+        error: 'Query too long',
+        message: `Query must be ${process.env.MAX_QUERY_LENGTH} characters or less. Current length: ${query.length}`,
+      });
+      return;
     }
 
     console.log(`🤖 Processing query: ${query}`);
