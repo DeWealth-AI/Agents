@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 // Rate limiting middleware (2 requests per minute per IP)
 const limiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 2, // limit each IP to 2 requests per windowMs
+  max: Number(process.env.MAX_REQUESTS_PER_MINUTE) || 3, // limit each IP to 2 requests per windowMs
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   message: {
