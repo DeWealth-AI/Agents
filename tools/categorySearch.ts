@@ -6,13 +6,9 @@ import CoingeckoCategories from '../types/CoingeckoCategories';
 const categorySearch = tool({
   name: 'category_search',
   description:
-    'Get the list of cryptocurrency categories. Make sure to always provide a list of keywords specific to what the user is asking for. This keyword will be specifically used to filter the categories using includes method on its name and category_id',
-  parameters: z.object({
-    keywords: z
-      .string()
-      .describe('Comma separated list of keywords to search for'),
-  }),
-  execute: async ({ keywords }) => {
+    'Get the list of cryptocurrency categories. Make sure to always provide a list of keywords specific to what the user is asking for. This keyword will be specifically used to filter the categories using includes method on its name and category_id. ALWAYS run check_existing_content tool first to check for existing content before using this tool. DO NOT use this tool if there is relevant existing content found.',
+  parameters: z.object({}),
+  execute: async () => {
     const spinner = ora('🔍 Fetching cryptocurrency categories...').start();
 
     try {
@@ -21,17 +17,7 @@ const categorySearch = tool({
       );
       const data: CoingeckoCategories[] = await response.json();
       spinner.succeed('✅ Categories fetched successfully');
-
-      const keywordsArray = keywords.split(',');
-      const filteredCategories = data.filter((category) => {
-        return keywordsArray.some(
-          (keyword) =>
-            category.name.toLowerCase().includes(keyword.toLowerCase()) ||
-            category.category_id.toLowerCase().includes(keyword.toLowerCase())
-        );
-      });
-
-      return filteredCategories;
+      return data;
     } catch (error) {
       spinner.fail('❌ Failed to fetch categories');
       console.error(error);

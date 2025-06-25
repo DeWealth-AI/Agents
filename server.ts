@@ -5,8 +5,7 @@ import rateLimit from 'express-rate-limit';
 import { Agent, run } from '@openai/agents';
 import { model } from './constants';
 import categorySearch from './tools/categorySearch';
-import coinPlatforms from './tools/coinPlatforms';
-import coinsMarketData from './tools/coinsMarketData';
+import marketDataByCategory from './tools/marketDataByCategory';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,7 +34,7 @@ const cryptoExpertAgent = new Agent({
   instructions:
     'You are a cryptocurrency expert agent that is responsible for providing information about cryptocurrencies. You should use the tools provided to you to get the information you need.',
   model: model,
-  tools: [categorySearch, coinPlatforms, coinsMarketData],
+  tools: [categorySearch, marketDataByCategory],
 });
 
 // Health check endpoint

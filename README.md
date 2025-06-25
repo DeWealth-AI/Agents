@@ -1,12 +1,14 @@
 # Crypto Expert Agent
 
-A TypeScript project using OpenAI Agents to provide cryptocurrency assistance with real-time market data.
+A TypeScript project using OpenAI Agents to provide cryptocurrency assistance with real-time market data and intelligent content management.
 
 ## Features
 
 - **Cryptocurrency Market Data**: Get real-time market data for cryptocurrencies using CoinGecko API
 - **Cryptocurrency Categories**: Fetch and analyze different cryptocurrency categories
 - **AI-Powered Assistance**: Uses GPT-4o-mini to provide intelligent crypto insights and recommendations
+- **Intelligent Content Management**: Automatically checks for existing relevant content before responding and stores new responses for future reference
+- **Vector Database Integration**: Uses Pinecone for semantic search and content storage
 - **Interactive CLI**: Beautiful terminal interface with loading spinners and status indicators
 - **REST API**: Express server with endpoints for programmatic access to the agent
 
@@ -15,6 +17,7 @@ A TypeScript project using OpenAI Agents to provide cryptocurrency assistance wi
 - Node.js (v18 or higher)
 - npm or yarn
 - OpenAI API key
+- Pinecone API key
 
 ## Installation
 
@@ -24,13 +27,35 @@ npm install
 
 ## Environment Variables
 
-Create a `.env` file in the root directory with your OpenAI API key:
+Create a `.env` file in the root directory with your API keys:
 
 ```bash
 OPENAI_API_KEY=your_actual_openai_api_key_here
+PINECONE_API_KEY=your_actual_pinecone_api_key_here
 ```
 
-You can get an API key from [OpenAI's platform](https://platform.openai.com/api-keys).
+You can get an API key from [OpenAI's platform](https://platform.openai.com/api-keys) and [Pinecone's platform](https://app.pinecone.io/).
+
+## Database Functionality
+
+The agent now includes intelligent content management with the following workflow:
+
+1. **Content Check**: Before responding to any query, the agent automatically searches the database for existing relevant content using semantic similarity
+2. **Response Generation**: The agent generates a response using current market data and incorporates any relevant existing information found
+3. **Content Storage**: After providing a response, the agent automatically stores the new information in the database for future reference
+
+### Database Tools
+
+- **`check_existing_content`**: Searches for existing content related to a topic with configurable similarity threshold
+- **`upsert_content`**: Stores new content with metadata for future retrieval
+
+### How It Works
+
+1. When a user asks a question, the agent first checks if similar information has been provided before
+2. If relevant existing content is found (similarity score ≥ 0.4), it's incorporated into the response
+3. The agent then gathers current market data using the available tools
+4. After providing the response, the agent stores the new information in the database
+5. Future queries about similar topics will benefit from this stored knowledge
 
 ## Development
 
@@ -183,22 +208,24 @@ console.log(data.response);
 
 ```
 agents/
-├── index.ts              # Main application entry point
-├── server.ts             # Express server with API endpoints
-├── tools/                # Agent tools directory
-│   ├── categorySearch.ts # Cryptocurrency categories tool
-│   ├── coinPlatforms.ts  # Coin platforms tool
-│   └── coinsMarketData.ts # Market data tool
-├── types/                # TypeScript type definitions
+├── index.ts                    # Main application entry point
+├── server.ts                   # Express server with API endpoints
+├── constants.ts                # Shared constants and configurations
+├── tools/                      # Agent tools directory
+│   ├── categorySearch.ts       # Cryptocurrency categories tool
+│   ├── marketDataByCategory.ts # Market data by category tool
+│   └── databaseOperations.ts   # Database check and upsert tools
+├── utils/                      # Utility functions
+│   └── embeddings.ts           # Embedding generation utility
+├── types/                      # TypeScript type definitions
 │   ├── CoingeckoCategories.ts
 │   └── CoingeckoPlatforms.ts
-├── dist/                 # Build output directory
-├── tsconfig.json         # TypeScript configuration for development
-├── tsconfig.prod.json    # TypeScript configuration for production
-├── package.json          # Project dependencies and scripts
-├── eslint.config.js      # ESLint configuration
-├── .prettierrc          # Prettier configuration
-└── README.md            # This file
+├── dist/                       # Build output directory
+├── tsconfig.json               # TypeScript configuration for development
+├── tsconfig.prod.json          # TypeScript configuration for production
+├── package.json                # Project dependencies and scripts
+├── eslint.config.js            # ESLint configuration
+└── .prettierrc                 # Prettier configuration
 ```
 
 ## Configuration
@@ -228,15 +255,6 @@ The project uses two TypeScript configurations:
 - `prettier` - Code formatting
 - `@typescript-eslint/eslint-plugin` - TypeScript ESLint plugin
 - `@typescript-eslint/parser` - TypeScript ESLint parser
-
-## How It Works
-
-The application creates an AI agent specialized in cryptocurrency assistance with two main tools:
-
-1. **Category Search Tool**: Fetches cryptocurrency categories from CoinGecko API
-2. **Market Data Tool**: Retrieves real-time market data for cryptocurrencies
-
-The agent uses GPT-4o-mini to process user queries and provide intelligent responses based on the available tools and real-time data.
 
 ## Example Usage
 
